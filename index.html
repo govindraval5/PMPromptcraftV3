@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PromptCraft — AI Prompt Toolkit for Product Managers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── THEME TOKENS ── */
+  :root {
+    --bg:        #ffffff;
+    --bg2:       #f8f7f4;
+    --bg3:       #f1efe8;
+    --text1:     #1a1a18;
+    --text2:     #5f5e5a;
+    --text3:     #888780;
+    --border:    rgba(0,0,0,0.10);
+    --border2:   rgba(0,0,0,0.18);
+    --accent:    #534AB7;
+    --accent-bg: #EEEDFE;
+    --accent-t:  #3C3489;
+    --card-bg:   #ffffff;
+    --hero-bg:   #EEEDFE;
+    --b1: #E1F5EE; --b1t: #0F6E56;
+    --b2: #EEEDFE; --b2t: #3C3489;
+    --b3: #FAEEDA; --b3t: #854F0B;
+    --b4: #E6F1FB; --b4t: #0C447C;
+    --b5: #FBEAF0; --b5t: #72243E;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  .dark {
+    --bg:        #1c1c1a;
+    --bg2:       #242421;
+    --bg3:       #2c2c2a;
+    --text1:     #f1efe8;
+    --text2:     #b4b2a9;
+    --text3:     #888780;
+    --border:    rgba(255,255,255,0.10);
+    --border2:   rgba(255,255,255,0.18);
+    --accent:    #AFA9EC;
+    --accent-bg: #26215C;
+    --accent-t:  #CECBF6;
+    --card-bg:   #242421;
+    --hero-bg:   #26215C;
+    --b1: #085041; --b1t: #9FE1CB;
+    --b2: #26215C; --b2t: #CECBF6;
+    --b3: #633806; --b3t: #FAC775;
+    --b4: #042C53; --b4t: #B5D4F4;
+    --b5: #4B1528; --b5t: #F4C0D1;
+    --shadow: 0 2px 16px rgba(0,0,0,0.35);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text1);
+    min-height: 100vh;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 56px;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    backdrop-filter: blur(8px);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 600; letter-spacing: -0.5px;
+  }
+  .logo-name { font-size: 15px; font-weight: 600; color: var(--text1); letter-spacing: -0.4px; }
+  .logo-sub  { font-size: 11px; color: var(--text3); margin-left: 2px; }
+
+  .theme-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 14px; border-radius: 20px; cursor: pointer;
+    background: var(--bg3); border: 0.5px solid var(--border);
+    font-size: 12px; font-weight: 500; color: var(--text2);
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .theme-btn:hover { background: var(--accent-bg); color: var(--accent-t); }
+  .theme-icon { font-size: 14px; line-height: 1; }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--hero-bg);
+    padding: 48px 32px 40px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .eyebrow {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 28px; font-weight: 600; line-height: 1.22;
+    letter-spacing: -0.6px; color: var(--text1); max-width: 560px;
+  }
+  .hero p {
+    font-size: 14px; color: var(--text2); margin-top: 10px;
+    max-width: 500px; line-height: 1.65;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 22px; }
+  .chip {
+    font-size: 11px; font-weight: 500; padding: 5px 12px;
+    border-radius: 20px; cursor: pointer; transition: opacity 0.15s;
+    border: none; outline: none;
+  }
+  .chip:hover { opacity: 0.75; }
+  .c1 { background: var(--b1); color: var(--b1t); }
+  .c2 { background: var(--b2); color: var(--b2t); }
+  .c3 { background: var(--b3); color: var(--b3t); }
+  .c4 { background: var(--b4); color: var(--b4t); }
+  .c5 { background: var(--b5); color: var(--b5t); }
+
+  /* ── TABS ── */
+  .tabs-wrap {
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    overflow-x: auto;
+    position: sticky; top: 56px; z-index: 40;
+  }
+  .tabs { display: flex; padding: 0 32px; }
+  .tab-btn {
+    padding: 14px 18px; font-size: 13px; font-weight: 500;
+    color: var(--text2); border-bottom: 2px solid transparent;
+    cursor: pointer; white-space: nowrap; background: none; border-top: none;
+    border-left: none; border-right: none; outline: none;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text1); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px 32px 60px; max-width: 960px; }
+  .section-lbl {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 16px;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── CARD GRID ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px; margin-bottom: 28px;
+  }
+  .p-card {
+    background: var(--card-bg); border: 0.5px solid var(--border);
+    border-radius: 14px; padding: 20px; cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .p-card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card-ico {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text1); line-height: 1.3; }
+  .card-desc  { font-size: 12px; color: var(--text2); line-height: 1.55; }
+  .card-cta   { font-size: 11px; font-weight: 600; color: var(--accent); margin-top: 4px; }
+
+  /* ── TIPS GRID ── */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 10px; margin-bottom: 24px;
+  }
+  .tip-card {
+    background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 16px;
+  }
+  .tip-num   { font-size: 10px; font-weight: 600; color: var(--accent); margin-bottom: 5px; letter-spacing: 0.5px; }
+  .tip-title { font-size: 13px; font-weight: 600; color: var(--text1); margin-bottom: 5px; }
+  .tip-body  { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+  /* ── TRANSPARENCY LIST ── */
+  .t-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .t-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--card-bg); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 16px;
+  }
+  .t-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); margin-top: 5px; flex-shrink: 0;
+  }
+  .t-title { font-size: 13px; font-weight: 600; color: var(--text1); margin-bottom: 3px; }
+  .t-desc  { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+  /* ── MODAL ── */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 200;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--bg); border-radius: 16px;
+    border: 0.5px solid var(--border2);
+    width: min(580px, 100%); max-height: 88vh;
+    overflow-y: auto; padding: 28px;
+    box-shadow: var(--shadow);
+  }
+  .modal-head {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; margin-bottom: 18px;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--text1); max-width: 460px; line-height: 1.3; }
+  .close-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--bg3); border: none; cursor: pointer;
+    color: var(--text2); font-size: 18px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .close-btn:hover { background: var(--accent-bg); color: var(--accent); }
+  .prompt-box {
+    background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: 10px; padding: 18px; font-size: 12.5px;
+    color: var(--text1); line-height: 1.75; white-space: pre-wrap;
+    margin-bottom: 18px; font-family: 'Inter', monospace;
+  }
+  .modal-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn-p {
+    padding: 9px 18px; background: var(--accent); color: #fff;
+    border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-p:hover { opacity: 0.85; }
+  .btn-s {
+    padding: 9px 18px; background: var(--bg3); color: var(--text1);
+    border: 0.5px solid var(--border2); border-radius: 8px;
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s;
+  }
+  .btn-s:hover { background: var(--accent-bg); color: var(--accent-t); }
+  .copied-msg { font-size: 12px; color: var(--b1t); font-weight: 500; display: none; }
+  .copied-msg.show { display: inline; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .topbar { padding: 0 16px; }
+    .hero   { padding: 32px 16px 28px; }
+    .hero h1 { font-size: 22px; }
+    .tabs   { padding: 0 16px; }
+    .content { padding: 20px 16px 48px; }
+    .modal  { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">PM</div>
+    <span class="logo-name">PromptCraft</span>
+    <span class="logo-sub">for Product Managers</span>
+  </div>
+  <div class="theme-btn" id="themeBtn" onclick="toggleTheme()">
+    <span class="theme-icon" id="themeIcon">☀</span>
+    <span id="themeLabel">Light mode</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="eyebrow">AI Prompt Toolkit · v1.0</div>
+  <h1>Ship better products faster with precision AI prompts</h1>
+  <p>Ready-to-use prompt templates for PRDs, user stories, bias-aware research, and more — built for PMs who want results, not guesswork.</p>
+  <div class="chips">
+    <button class="chip c2" onclick="switchTab('prd')">PRD Templates</button>
+    <button class="chip c1" onclick="switchTab('stories')">User Stories</button>
+    <button class="chip c3" onclick="switchTab('bias')">Bias-Aware</button>
+    <button class="chip c4" onclick="switchTab('best')">Best Practices</button>
+    <button class="chip c5" onclick="switchTab('transparency')">AI Transparency</button>
+  </div>
+</section>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs" id="tabsBar">
+    <button class="tab-btn active" data-tab="prd"          onclick="switchTab('prd')">PRD Templates</button>
+    <button class="tab-btn"        data-tab="stories"      onclick="switchTab('stories')">User Stories</button>
+    <button class="tab-btn"        data-tab="bias"         onclick="switchTab('bias')">Bias-Aware Prompts</button>
+    <button class="tab-btn"        data-tab="best"         onclick="switchTab('best')">PM Best Practices</button>
+    <button class="tab-btn"        data-tab="transparency" onclick="switchTab('transparency')">AI Transparency</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<main class="content">
+
+  <!-- PRD TAB -->
+  <div class="tab-panel active" id="tab-prd">
+    <div class="section-lbl">PRD Prompt Templates</div>
+    <div class="card-grid">
+      <div class="p-card" onclick="openModal('prd1')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b2)">📄</div>
+          <span class="chip c2" style="font-size:10px;padding:3px 9px;">Core PRD</span>
+        </div>
+        <div class="card-title">Full Product Requirements Document</div>
+        <div class="card-desc">Generate a complete PRD with goals, success metrics, user personas, scope, and edge cases.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+      <div class="p-card" onclick="openModal('prd2')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b4)">🔍</div>
+          <span class="chip c4" style="font-size:10px;padding:3px 9px;">Discovery</span>
+        </div>
+        <div class="card-title">Problem Statement & Opportunity Sizing</div>
+        <div class="card-desc">Frame the problem clearly, quantify the opportunity, and articulate why it matters now.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+      <div class="p-card" onclick="openModal('prd3')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b3)">🎯</div>
+          <span class="chip c3" style="font-size:10px;padding:3px 9px;">Go-to-Market</span>
+        </div>
+        <div class="card-title">Launch Readiness Checklist PRD</div>
+        <div class="card-desc">Generate a launch-focused PRD that maps features to GTM activities and readiness criteria.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+      <div class="p-card" onclick="openModal('prd4')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b1)">📊</div>
+          <span class="chip c1" style="font-size:10px;padding:3px 9px;">Metrics</span>
+        </div>
+        <div class="card-title">Success Metrics & OKR Alignment</div>
+        <div class="card-desc">Define measurable outcomes, north star metrics, guardrail metrics, and OKR linkage.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STORIES TAB -->
+  <div class="tab-panel" id="tab-stories">
+    <div class="section-lbl">User Story Prompts</div>
+    <div class="card-grid">
+      <div class="p-card" onclick="openModal('story1')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b1)">👤</div>
+          <span class="chip c1" style="font-size:10px;padding:3px 9px;">Agile</span>
+        </div>
+        <div class="card-title">Standard User Story Generator</div>
+        <div class="card-desc">Create well-structured "As a… I want… So that…" stories with acceptance criteria and edge cases.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+      <div class="p-card" onclick="openModal('story2')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b2)">🗺️</div>
+          <span class="chip c2" style="font-size:10px;padding:3px 9px;">Journey</span>
+        </div>
+        <div class="card-title">User Journey Story Mapping</div>
+        <div class="card-desc">Map an entire user journey into an ordered backlog of stories across discovery, activation, and retention.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+      <div class="p-card" onclick="openModal('story3')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b5)">♿</div>
+          <span class="chip c5" style="font-size:10px;padding:3px 9px;">Accessibility</span>
+        </div>
+        <div class="card-title">Inclusive User Stories</div>
+        <div class="card-desc">Enrich user stories with accessibility, WCAG considerations, and assistive tech scenarios automatically.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIAS TAB -->
+  <div class="tab-panel" id="tab-bias">
+    <div class="section-lbl">Bias-Aware Prompt Templates</div>
+    <div class="card-grid">
+      <div class="p-card" onclick="openModal('bias1')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b5)">⚖️</div>
+          <span class="chip c5" style="font-size:10px;padding:3px 9px;">Research</span>
+        </div>
+        <div class="card-title">Bias Audit for User Research Plans</div>
+        <div class="card-desc">Review a research plan for sampling bias, leading questions, confirmation bias, and recruitment gaps.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+      <div class="p-card" onclick="openModal('bias2')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b3)">🌍</div>
+          <span class="chip c3" style="font-size:10px;padding:3px 9px;">Inclusive</span>
+        </div>
+        <div class="card-title">Diverse Persona Generator</div>
+        <div class="card-desc">Generate personas representing underrepresented user groups, geographies, abilities, and literacy levels.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+      <div class="p-card" onclick="openModal('bias3')">
+        <div class="card-top">
+          <div class="card-ico" style="background:var(--b4)">🔬</div>
+          <span class="chip c4" style="font-size:10px;padding:3px 9px;">Critique</span>
+        </div>
+        <div class="card-title">Feature Bias Impact Analysis</div>
+        <div class="card-desc">Evaluate how a proposed feature may unintentionally disadvantage specific user segments.</div>
+        <div class="card-cta">View prompt →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEST PRACTICES TAB -->
+  <div class="tab-panel" id="tab-best">
+    <div class="section-lbl">PM Best Practices with AI</div>
+    <div class="tips-grid">
+      <div class="tip-card"><div class="tip-num">01 · CONTEXT FIRST</div><div class="tip-title">Anchor prompts with context</div><div class="tip-body">Start every prompt with your product domain, user segment, and stage (discovery, design, GTM). AI output quality scales linearly with context richness.</div></div>
+      <div class="tip-card"><div class="tip-num">02 · PERSONA LOCK</div><div class="tip-title">Assign a specific expert role</div><div class="tip-body">Prefix prompts with "Act as a senior PM at a Series B SaaS company…" to get outputs calibrated to your business context, not generic advice.</div></div>
+      <div class="tip-card"><div class="tip-num">03 · OUTPUT FORMAT</div><div class="tip-title">Request structured deliverables</div><div class="tip-body">Specify output format explicitly — "Return a table with columns: Story, Acceptance Criteria, Priority, and Effort." This eliminates back-and-forth editing.</div></div>
+      <div class="tip-card"><div class="tip-num">04 · ITERATIVE DRAFTS</div><div class="tip-title">Treat AI output as a first draft</div><div class="tip-body">Use AI to generate v0.1, then refine with domain knowledge. The goal is 70% time saved on structure — you own the strategy and nuance.</div></div>
+      <div class="tip-card"><div class="tip-num">05 · CONSTRAINTS</div><div class="tip-title">Inject real-world constraints</div><div class="tip-body">Include constraints like "team of 4 engineers, 6-week sprint, existing React codebase" so AI solutions are implementable, not theoretical.</div></div>
+      <div class="tip-card"><div class="tip-num">06 · RED TEAM</div><div class="tip-title">Ask AI to challenge your plan</div><div class="tip-body">Append "Now list 5 reasons this plan could fail and how to mitigate each" to any PRD or roadmap prompt for built-in devil's advocate thinking.</div></div>
+      <div class="tip-card"><div class="tip-num">07 · STAKEHOLDER LENS</div><div class="tip-title">Reframe outputs per audience</div><div class="tip-body">Run the same PRD through: "Summarise this for an engineer", "for a CFO", and "for a new customer". Saves hours of reformatting.</div></div>
+      <div class="tip-card"><div class="tip-num">08 · VERSION CONTROL</div><div class="tip-title">Document prompt + output pairs</div><div class="tip-body">Save high-performing prompts in a shared Notion page. When a prompt produces great output, it becomes a team asset — not a personal shortcut.</div></div>
+    </div>
+  </div>
+
+  <!-- TRANSPARENCY TAB -->
+  <div class="tab-panel" id="tab-transparency">
+    <div class="section-lbl">AI Usage Transparency Guidelines</div>
+    <div class="t-list">
+      <div class="t-item"><div class="t-dot"></div><div><div class="t-title">Disclose AI-generated artefacts in reviews</div><div class="t-desc">Label any PRD, story, or spec that was drafted with AI assistance so stakeholders can calibrate how much editorial judgement was applied before the review.</div></div></div>
+      <div class="t-item"><div class="t-dot"></div><div><div class="t-title">Never ship AI output without human validation</div><div class="t-desc">AI-generated acceptance criteria, edge cases, and metrics must be reviewed by a PM who understands the customer context before being added to the backlog.</div></div></div>
+      <div class="t-item"><div class="t-dot"></div><div><div class="t-title">Identify and document model limitations per use case</div><div class="t-desc">Note where AI was unreliable for your context (e.g. niche regulatory domains, non-English user research) and add a manual review step in your team's workflow.</div></div></div>
+      <div class="t-item"><div class="t-dot"></div><div><div class="t-title">Do not input confidential customer data into public LLMs</div><div class="t-desc">Use anonymised or synthetic data when prompting. Work with your legal and security teams to define what data is safe to include in prompts on approved tools.</div></div></div>
+      <div class="t-item"><div class="t-dot"></div><div><div class="t-title">Communicate AI use to users where it impacts their experience</div><div class="t-desc">If your product uses AI to generate recommendations, summaries, or decisions that affect users, include clear disclosure in the UI and your privacy policy.</div></div></div>
+      <div class="t-item"><div class="t-dot"></div><div><div class="t-title">Track AI leverage metrics as a team health signal</div><div class="t-desc">Monitor the ratio of AI-assisted to fully manual artefacts each sprint. Aim for consistent use patterns — neither avoidance nor over-reliance — across the team.</div></div></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <div class="prompt-box" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn-p" onclick="copyPrompt()">Copy prompt</button>
+      <button class="btn-s" onclick="closeModal()">Close</button>
+      <span class="copied-msg" id="copiedMsg">✓ Copied to clipboard!</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const PROMPTS = {
+  prd1: {
+    title: "Full Product Requirements Document",
+    text: `Act as a senior product manager at a B2B SaaS company.
+
+I am building [PRODUCT NAME] for [TARGET USER SEGMENT].
+
+Generate a complete PRD with the following sections:
+
+1. Executive Summary (2–3 sentences)
+2. Problem Statement — what pain does this solve and for whom?
+3. Goals & Success Metrics — include a north star metric, 2 leading indicators, and 1 guardrail metric
+4. User Personas — 2 primary personas with goals, frustrations, and technical proficiency
+5. Scope — In scope features (MVP), Out of scope (v2+)
+6. Functional Requirements — numbered list with priority (P0/P1/P2)
+7. Non-Functional Requirements — performance, security, accessibility
+8. Edge Cases & Risks — at least 5
+9. Open Questions — decisions still needed before build
+10. Dependencies — teams, APIs, and third-party tools required
+
+Context: [PASTE RELEVANT CONTEXT, RESEARCH, OR NOTES HERE]
+
+Format the output as a structured document. Use plain language — no jargon unless it is industry-standard for [INDUSTRY].`
+  },
+  prd2: {
+    title: "Problem Statement & Opportunity Sizing",
+    text: `Act as a product strategist.
+
+I want to validate and articulate the following problem for our product team and leadership:
+
+Problem area: [DESCRIBE THE PROBLEM IN 1–2 SENTENCES]
+Current workaround used by users: [HOW DO USERS SOLVE THIS TODAY?]
+Target user: [WHO EXPERIENCES THIS PROBLEM?]
+
+Please generate:
+1. A crisp problem statement (2–3 sentences, no solution language)
+2. The "so what" — why this matters to the business
+3. Opportunity sizing — estimate the addressable user base and potential revenue impact using reasonable assumptions (state all assumptions clearly)
+4. A prioritisation recommendation using the RICE framework (Reach, Impact, Confidence, Effort)
+5. Three alternative framings of this problem that might unlock different solutions
+
+Be direct. If the problem statement is weak or unclear, say so and suggest a stronger framing.`
+  },
+  prd3: {
+    title: "Launch Readiness Checklist PRD",
+    text: `Act as a senior PM preparing for a product launch.
+
+Feature / product being launched: [FEATURE OR PRODUCT NAME]
+Target launch date: [DATE]
+Team size: [NUMBER] engineers, [NUMBER] designers
+
+Generate a launch-readiness PRD that includes:
+
+1. Launch goals — what does success look like in week 1, month 1, and quarter 1?
+2. Feature summary — a 3-sentence description suitable for a press release
+3. GTM readiness checklist — marketing, sales enablement, support documentation, and in-product onboarding
+4. Technical readiness checklist — monitoring, rollback plan, feature flags, load testing
+5. Legal & compliance checklist — privacy review, accessibility audit, T&C updates
+6. Stakeholder sign-off matrix — who needs to approve what before launch?
+7. Rollout strategy — phased rollout plan with go/no-go criteria per phase
+8. Post-launch review plan — when, who, and what metrics will be reviewed
+
+Flag any high-risk items with [RISK] that require resolution before proceeding.`
+  },
+  prd4: {
+    title: "Success Metrics & OKR Alignment",
+    text: `Act as a data-driven product manager.
+
+Product area: [PRODUCT AREA OR FEATURE]
+Company objective: [PASTE THE RELEVANT COMPANY OKR HERE]
+User action we are trying to change: [E.G. "Increase weekly active usage of the reporting dashboard"]
+
+Generate:
+1. A north star metric — one metric that best represents long-term product value
+2. Two leading indicators — early signals this metric is moving in the right direction
+3. Two lagging indicators — outcomes we expect to see 30–60 days after changes
+4. One guardrail metric — a metric we must NOT degrade (e.g. support ticket volume)
+5. OKR alignment — write a Key Result statement that links this work to the company objective above
+6. Measurement plan — data source, instrumentation required, and reporting cadence for each metric
+7. Anti-metrics — common but misleading metrics to avoid for this use case
+
+Justify each metric choice in one sentence.`
+  },
+  story1: {
+    title: "Standard User Story Generator",
+    text: `Act as an experienced agile product manager.
+
+Feature or capability: [DESCRIBE THE FEATURE IN 1–2 SENTENCES]
+Primary user: [USER ROLE OR PERSONA NAME]
+Business context: [WHY ARE WE BUILDING THIS?]
+
+Generate 5 user stories in this exact format for each:
+
+**Story title**
+As a [user role], I want [goal or action], so that [benefit or outcome].
+
+Acceptance criteria (Given / When / Then format):
+- Given [precondition], When [action], Then [expected result]
+(Provide 3–5 acceptance criteria per story)
+
+Edge cases to handle:
+- [List 2–3 edge cases or error states]
+
+Story size estimate: [XS / S / M / L / XL]
+Priority: [P0 / P1 / P2]
+Dependencies: [Any blockers or related stories]
+
+After generating the stories, list any assumptions you made and flag any stories that appear too large to complete in a single sprint.`
+  },
+  story2: {
+    title: "User Journey Story Mapping",
+    text: `Act as a product manager running a story mapping workshop.
+
+Product or feature area: [PRODUCT AREA]
+User goal: [WHAT IS THE USER TRYING TO ACHIEVE END-TO-END?]
+User persona: [NAME AND BRIEF DESCRIPTION]
+
+Map the full user journey into a story map with three layers:
+
+Layer 1 — Backbone (high-level activities, 5–8 steps)
+Layer 2 — Walking skeleton (minimum stories to complete each activity — MVP)
+Layer 3 — Enhancements (additional stories that improve the experience — v2+)
+
+Format as a table:
+| Activity | MVP Stories | V2+ Stories |
+
+After the table:
+- Identify the riskiest assumption in the MVP journey
+- Suggest one experiment to validate that assumption before building
+- List any user steps where drop-off is most likely and why`
+  },
+  story3: {
+    title: "Inclusive & Accessible User Stories",
+    text: `Act as a product manager with deep expertise in inclusive design and accessibility.
+
+Original user story: [PASTE THE USER STORY HERE]
+Product type: [WEB APP / MOBILE APP / DESKTOP / OTHER]
+
+Enrich this user story to be fully inclusive by:
+
+1. Rewriting the story to be persona-neutral and avoid ability assumptions
+2. Adding accessibility acceptance criteria for:
+   - Screen reader compatibility (WCAG 2.1 AA)
+   - Keyboard-only navigation
+   - Colour contrast requirements
+   - Cognitive load considerations (plain language, reduced steps)
+   - Motor impairment accommodations
+3. Generating two additional stories for underrepresented users:
+   - A user with low digital literacy in a low-bandwidth environment
+   - A user with a relevant physical or cognitive accessibility need
+4. Listing WCAG 2.1 success criteria that apply to this story
+5. Recommending one usability test method to validate accessibility before launch`
+  },
+  bias1: {
+    title: "Bias Audit for User Research Plans",
+    text: `Act as a UX research specialist and bias auditor.
+
+I am planning the following user research:
+[PASTE YOUR RESEARCH PLAN, SURVEY, OR INTERVIEW SCRIPT HERE]
+
+Please audit this research plan for the following bias types and provide specific corrections for each issue found:
+
+1. Sampling bias — Is the participant recruitment criteria excluding relevant user groups?
+2. Confirmation bias — Are questions designed to validate existing assumptions rather than discover truth?
+3. Leading questions — Are any questions suggesting a "correct" answer?
+4. Social desirability bias — Might participants answer to please the researcher rather than honestly?
+5. Recency bias — Are questions focused on recent behaviour at the expense of long-term patterns?
+6. Framing effect — Does the language used in questions prime participants to think a certain way?
+7. Survivorship bias — Are we only talking to current users and missing those who churned?
+
+For each bias found:
+- Quote the specific element with the problem
+- Explain the risk
+- Provide a corrected version
+
+Finally, recommend 3 recruitment sources to improve participant diversity for this study.`
+  },
+  bias2: {
+    title: "Diverse Persona Generator",
+    text: `Act as an inclusive product strategist.
+
+Product: [PRODUCT NAME AND ONE-LINE DESCRIPTION]
+Market: [GEOGRAPHY OR MARKET YOU ARE TARGETING]
+Primary use case: [WHAT DOES THE PRODUCT DO FOR THE USER?]
+
+Generate 5 user personas that collectively represent the full diversity of your potential user base. For each persona, include:
+
+- Name, age, location, and occupation
+- Primary language and digital literacy level (1–5 scale)
+- Device and connectivity context (e.g. Android, 3G, shared device)
+- Relevant ability or accessibility consideration
+- Goals and motivations for using this product
+- Key frustrations with current alternatives
+- The specific risk that this persona is currently underrepresented in product decisions
+
+Ensure that across the 5 personas you include:
+✓ At least one non-Western geography
+✓ At least one user with an accessibility need
+✓ At least one user with low digital literacy
+✓ Gender diversity
+✓ At least one older adult (55+)
+
+After the personas, suggest two product decisions that may need revisiting in light of these user groups.`
+  },
+  bias3: {
+    title: "Feature Bias Impact Analysis",
+    text: `Act as a responsible AI and product ethics advisor.
+
+Proposed feature: [DESCRIBE THE FEATURE IN DETAIL]
+How it works: [EXPLAIN THE LOGIC, ALGORITHM, OR DATA USED]
+Target users: [WHO IS THIS FOR?]
+
+Conduct a bias impact analysis by examining:
+
+1. Data bias — If this feature uses historical data or ML, which user groups may be underrepresented in training data?
+2. Algorithmic bias — Could the feature's logic produce systematically different outcomes for different demographic groups?
+3. Access bias — Are there users who cannot access or benefit from this feature due to device, connectivity, or literacy barriers?
+4. Outcome bias — Does the feature create or reinforce unequal outcomes between user segments?
+5. Feedback loop risk — Could the feature's outputs over time amplify existing inequalities?
+
+For each identified risk:
+- Rate severity: Low / Medium / High
+- Describe the impacted user group
+- Propose a mitigation or design change
+
+Finally, recommend a pre-launch evaluation method appropriate for this feature.`
+  }
+};
+
+let currentPromptText = '';
+let isDark = false;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('themeIcon').textContent  = isDark ? '☾' : '☀';
+  document.getElementById('themeLabel').textContent = isDark ? 'Dark mode' : 'Light mode';
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + id));
+}
+
+function openModal(id) {
+  const p = PROMPTS[id];
+  if (!p) return;
+  currentPromptText = p.text;
+  document.getElementById('modalTitle').textContent = p.title;
+  document.getElementById('modalBody').textContent  = p.text;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('copiedMsg').classList.remove('show');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+function copyPrompt() {
+  if (!currentPromptText) return;
+  navigator.clipboard.writeText(currentPromptText).then(() => {
+    const m = document.getElementById('copiedMsg');
+    m.classList.add('show');
+    setTimeout(() => m.classList.remove('show'), 2500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = currentPromptText;
+    document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    const m = document.getElementById('copiedMsg');
+    m.classList.add('show');
+    setTimeout(() => m.classList.remove('show'), 2500);
+  });
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
